@@ -115,84 +115,85 @@ for (i in factors) {
 
 remove(i) #Cleaning environment
 
-
 ## Resuming data
-```{r, echo = FALSE, results = "asis", warning = FALSE}
+
 for (i in continuous) {
   #Resuming continuous variables in the overall cohort
-  cat("\n")
   x <- describe.numeric(data[[i]])
   x <- as.data.frame(x)
   row.names(x) <- c("Mean", "Median", "Variance", "SD", "Valid n")
+  colnames(x) <- c(i)
   y <- quantile(data[[i]], prob=c(.25, .75), na.rm = TRUE)
   y <- as.data.frame(y)
-  colnames(y) <- c("x")
+  colnames(y) <- c(i)
   z <- sum(is.na(data[[i]]))
   z <- as.data.frame(z)
-  colnames(z) <- c("x")
   row.names(z) <- c("NA")
+    colnames(z) <- c(i)
   x <- rbind(x, z, y)
-  colnames(x) <- c(i)
   print(kable(x))
+  remove(x, y, z) #Cleaning environment
   cat("\n")
   
   #Resuming continuous variables in the different subgroups
-  a <- filter(data,data$control == 0)
-  b <- filter(data,data$control == 1)
-  c <- c(sum(is.na(a[[i]])),sum(is.na(b[[i]])))
-  c <- as.data.frame(c)
-  colnames(c) <- c("NA")
-  row.names(c) <- c("Uncontrolled SE", "Controlled SE")
+  uncontrol <- filter(data,data$control == 0)
+  control <- filter(data,data$control == 1)
+  Missing <- c(sum(is.na(a[[i]])),sum(is.na(b[[i]])))
+  Missing <- as.data.frame(Missing)
+  colnames(missing) <- c("NA")
+  row.names(missing) <- c("Uncontrolled SE", "Controlled SE")
   Mean <- tapply(data[[i]], control, FUN = mean, na.rm = TRUE)
   Mean <- as.data.frame(Mean)
   SD <- tapply(data[[i]], control, FUN = sd, na.rm = 1)
   SD <- as.data.frame(SD)
-  Q1 <- c((quantile(a[[i]], prob=c(.25), na.rm = TRUE)),quantile(b[[i]], prob=c(.25), na.rm = TRUE))
+  Q1 <- c((quantile(uncontrol[[i]], prob=c(.25), na.rm = TRUE)),quantile(control[[i]], prob=c(.25), na.rm = TRUE))
   Q1 <- as.data.frame(Q1)
   colnames(Q1) <- c("25%")
-  Q3 <- c((quantile(a[[i]], prob=c(.75), na.rm = TRUE)),quantile(b[[i]], prob=c(.75), na.rm = TRUE))
+  Q3 <- c((quantile(uncontrol[[i]], prob=c(.75), na.rm = TRUE)),quantile(control[[i]], prob=c(.75), na.rm = TRUE))
   Q3 <- as.data.frame(Q3)
   colnames(Q3) <- c("75%")
   Median <- tapply(data[[i]], control, FUN = median, na.rm = TRUE)
   Median <- as.data.frame(Median)
-  Median <- cbind(Q1, Median, Q3, Mean, SD, c)
+  Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
   row.names(Median) <- c("Uncontrolled SE", "Controlled SE")
   print(kable(Median))
+  remove(uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
   cat("\n")
 }
 
 for (i in factors) {
   #Resuming factors (n)
   cat("\n")
-  a <- filter(data,data$control == 0)
-  b <- filter(data,data$control == 1)
+  uncontrol <- filter(data,data$control == 0)
+  control <- filter(data,data$control == 1)
   
   x <- table(data[[i]], useNA = "always")
   x <- as.data.frame(x)
-  y <- table(a[[i]], useNA = "always")
+  y <- table(uncontrol[[i]], useNA = "always")
   y <- as.data.frame(y)
-  z <- table(b[[i]], useNA = "always")
+  z <- table(control[[i]], useNA = "always")
   z <- as.data.frame(z)
   x <- cbind(x,y[2],z[2])
   colnames(x) <- c(i, "Overall Cohort (n)", "Uncontrolled SE (n)", "Controlled SE (n)")
   print(kable(x))
+  remove(x, y, z) #Cleaning environment
   cat("\n")
   
   #Resuming factors (%)
-  c <- prop.table(table(data[[i]], useNA = "no"))
+  a <- prop.table(table(data[[i]], useNA = "no"))
+  a <- as.data.frame(a)
+  b <- prop.table(table(uncontrol[[i]], useNA = "no"))
+  b <- as.data.frame(b)
+  c <- prop.table(table(control[[i]], useNA = "no"))
   c <- as.data.frame(c)
-  d <- prop.table(table(a[[i]], useNA = "no"))
-  d <- as.data.frame(d)
-  e <- prop.table(table(b[[i]], useNA = "no"))
-  e <- as.data.frame(e)
-  c <- cbind(c,d[2],e[2])
-  colnames(c) <- c(i, "Overall Cohort (%)", "Uncontrolled SE (%)", "Controlled SE (%)")
-  print(kable(c))
+  a <- cbind(a, b[2], c[2])
+  colnames(a) <- c(i, "Overall Cohort (%)", "Uncontrolled SE (%)", "Controlled SE (%)")
+  print(kable(a))
+  remove(uncontrol, control, a, b, c) #Cleaning environment
   cat("\n")
 }
 
-remove(x, y, z, a, b, c, d, e, Mean, SD, Q1, Q3, Median) #Cleaning environment
-```
+remove(i) #Cleaning environment
 
 ```{r, echo = FALSE, results = "asis", warning = FALSE}
   cat("\n")

@@ -195,6 +195,7 @@ for (i in factors) {
 
 remove(i) #Cleaning environment
 
+##Describing the subgroup of patients treated with propofol and without early withdrawal for propofol dosage
 ```{r, echo = FALSE, results = "asis", warning = FALSE}
   cat("\n")
   a <- filter(data,data$propofol==1 & data$early_withdrawal==0)

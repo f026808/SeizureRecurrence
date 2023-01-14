@@ -263,8 +263,8 @@ for (i in variableofinterest) {
   #Resuming factors (n)
   cat("\n")
   noearlywithdrawal <- filter(data,data$early_withdrawal==0)
-  uncontrol <- filter(data,data$control == 0)
-  control <- filter(data,data$control == 1)
+  uncontrol <- filter(data,data$control == 0 & data$early_withdrawal==0)
+  control <- filter(data,data$control == 1 & data$early_withdrawal==0)
   
   x <- table(noearlywithdrawal[[i]], useNA = "always")
   x <- as.data.frame(x)

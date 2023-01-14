@@ -108,12 +108,12 @@ remove(vasc_remote, others_remote, import) #Cleaning environment
 
 
 ## Selecting variables of interest
-continuous <- c("age", "SAPS_II", "SAPS_II_age", "STESS","tempFirst", "GCS_T_ad", "propofol_at_initiation", "propofol_during_6_first_hours", "time_before_anaesthetic_withdrawal","ICU_stay", "SejourHOSP_auto", "dureeSED", "dureeVM")
+continuous <- c("age", "SAPS_II", "SAPS_II_age", "STESS","tempFirst", "GCS_T_ad","ICU_stay", "SejourHOSP_auto", "dureeSED", "dureeVM")
 for (i in continuous) {
   data[[i]] <- as.numeric(data[[i]])
 }
 
-factors <- c("sexe", "mRS_ad", "GOS_ad", "alcohol","cerebral_injury", "prev_epilepsy", "symptomatique", "cryptogenique", "idiopathique", "prev_SE", "out_of_hospital_onset", "secondary_generalized", "intermittente_seizure", "duree_crise", "focal_neurologic_signs", "unwitness_seizure", "duree_inconnue", "duree_crise", "RSE", "acute", "acute_on_remote", "remote", "progressive", "unknown", "unknown_on_remote", "control", "initial_failure", "breakthrough_seizures", "withdrawal_seizures", "intolerable_side_effects", "death_during_treatment", "clonies_ad", "MRI_An_post_critique", "1st_line", "2nd line", "fosphenytoine", "phenobarbital", "levetiracetam", "valproate", "autres_2_eme_ligne", "IOT_bef", "IOT_bef_SE", "IOT_bef_coma", "IOT_bef_resp","IOT_ad", "IOT_ad_SE", "IOT_ad_coma", "IOT_ad_resp", "propofol", "midazolam", "thiopental", "MRI", "early_withdrawal", "acute_vasc", "acute_stroke", "acute_hemoragic", "acute_PRES", "acute_TVC", "acute_toxic", "acute_drug", "acute_OH", "acute_metabolic", "acute_trauma", "acute_infection", "acute_heatstroke", "tumor_progressive", "dysimmune_progressive", "remote_all, epilepto", "mRS_admission_01", "mRS_discharge_01", "death_discharge", "mRS_3month_01", "death_3month", "hyperglycemia", "dureeinf30", "propofolmidazolam", "onlypropofol", "onlymidazolam","vasc_remote", "others_remote")
+factors <- c("sexe", "mRS_ad", "GOS_ad", "alcohol","cerebral_injury", "prev_epilepsy", "symptomatique", "cryptogenique", "idiopathique", "prev_SE", "out_of_hospital_onset", "secondary_generalized", "intermittente_seizure", "duree_crise", "focal_neurologic_signs", "unwitness_seizure", "duree_inconnue", "duree_crise", "RSE", "acute", "acute_on_remote", "remote", "progressive", "unknown", "unknown_on_remote", "control", "initial_failure", "breakthrough_seizures", "withdrawal_seizures", "intolerable_side_effects", "death_during_treatment", "clonies_ad", "MRI_An_post_critique", "1st_line", "2nd line", "fosphenytoine", "phenobarbital", "levetiracetam", "valproate", "autres_2_eme_ligne", "IOT_bef", "IOT_bef_SE", "IOT_bef_coma", "IOT_bef_resp","IOT_ad", "IOT_ad_SE", "IOT_ad_coma", "IOT_ad_resp", "MRI", "early_withdrawal", "acute_vasc", "acute_stroke", "acute_hemoragic", "acute_PRES", "acute_TVC", "acute_toxic", "acute_drug", "acute_OH", "acute_metabolic", "acute_trauma", "acute_infection", "acute_heatstroke", "tumor_progressive", "dysimmune_progressive", "remote_all, epilepto", "mRS_admission_01", "mRS_discharge_01", "death_discharge", "mRS_3month_01", "death_3month", "hyperglycemia", "dureeinf30", "vasc_remote", "others_remote")
 for (i in factors) {
   data[[i]] <- as.factor(data[[i]])
 }
@@ -199,9 +199,99 @@ for (i in factors) {
   remove(uncontrol, control, a, b, c) #Cleaning environment
   cat("\n")
 }
-
 remove(i) #Cleaning environment
 
+
+##Resuming data in the subgroup of patients without early withdrawal
+
+#Defining variables of interest (continuous)
+variableofinterest <- c("time_before_anaesthetic_withdrawal", "dureeSED", "dureeVM")
+
+#Resuming continuous variables
+for (i in variableofinterest) {
+  #Resuming continuous variables in the overall cohort
+  a <- filter(data,data$early_withdrawal == 0)
+  x <- describe.numeric(a[[i]])
+  x <- as.data.frame(x)
+  row.names(x) <- c("Mean", "Median", "Variance", "SD", "Valid n")
+  colnames(x) <- c(i)
+  y <- quantile(a[[i]], prob=c(.25, .75), na.rm = TRUE)
+  y <- as.data.frame(y)
+  colnames(y) <- c(i)
+  z <- sum(is.na(a[[i]]))
+  z <- as.data.frame(z)
+  row.names(z) <- c("NA")
+    colnames(z) <- c(i)
+  x <- rbind(x, z, y)
+  print(kable(x))
+  remove(a, x, y, z) #Cleaning environment
+  cat("\n")
+  
+  #Resuming continuous variables in the different subgroups
+  uncontrol <- filter(data,data$control == 0 & data$early_withdrawal == 0)
+  control <- filter(data,data$control == 1 & data$early_withdrawal == 0)
+  a <- filter(data,data$early_withdrawal == 0)
+  Missing <- c(sum(is.na(a[[i]])),sum(is.na(b[[i]])))
+  Missing <- as.data.frame(Missing)
+  colnames(missing) <- c("NA")
+  row.names(missing) <- c("Uncontrolled SE", "Controlled SE")
+  Mean <- tapply(a[[i]], control, FUN = mean, na.rm = TRUE)
+  Mean <- as.data.frame(Mean)
+  SD <- tapply(a[[i]], control, FUN = sd, na.rm = 1)
+  SD <- as.data.frame(SD)
+  Q1 <- c((quantile(uncontrol[[i]], prob=c(.25), na.rm = TRUE)),quantile(control[[i]], prob=c(.25), na.rm = TRUE))
+  Q1 <- as.data.frame(Q1)
+  colnames(Q1) <- c("25%")
+  Q3 <- c((quantile(uncontrol[[i]], prob=c(.75), na.rm = TRUE)),quantile(control[[i]], prob=c(.75), na.rm = TRUE))
+  Q3 <- as.data.frame(Q3)
+  colnames(Q3) <- c("75%")
+  Median <- tapply(a[[i]], control, FUN = median, na.rm = TRUE)
+  Median <- as.data.frame(Median)
+  Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
+  row.names(Median) <- c("Uncontrolled SE", "Controlled SE")
+  print(kable(Median))
+  remove(a,uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+  cat("\n")
+}
+remove(i, variable of interest) #Cleaning environment
+
+#Defining variables of interest (factors)
+variableofinterest <- c("propofol", "midazolam", "thiopental", "propofolmidazolam", "onlypropofol", "onlymidazolam")
+
+#Resuming factors
+for (i in variableofinterest) {
+  #Resuming factors (n)
+  cat("\n")
+  noearlywithdrawal <- filter(data,data$early_withdrawal==0)
+  uncontrol <- filter(data,data$control == 0)
+  control <- filter(data,data$control == 1)
+  
+  x <- table(noearlywithdrawal[[i]], useNA = "always")
+  x <- as.data.frame(x)
+  y <- table(uncontrol[[i]], useNA = "always")
+  y <- as.data.frame(y)
+  z <- table(control[[i]], useNA = "always")
+  z <- as.data.frame(z)
+  x <- cbind(x,y[2],z[2])
+  colnames(x) <- c(i, "Overall Cohort (n)", "Uncontrolled SE (n)", "Controlled SE (n)")
+  print(kable(x))
+  remove(x, y, z) #Cleaning environment
+  cat("\n")
+  
+  #Resuming factors (%)
+  a <- prop.table(table(noearlywithdrawal[[i]], useNA = "no"))
+  a <- as.data.frame(a)
+  b <- prop.table(table(uncontrol[[i]], useNA = "no"))
+  b <- as.data.frame(b)
+  c <- prop.table(table(control[[i]], useNA = "no"))
+  c <- as.data.frame(c)
+  a <- cbind(a, b[2], c[2])
+  colnames(a) <- c(i, "Overall Cohort (%)", "Uncontrolled SE (%)", "Controlled SE (%)")
+  print(kable(a))
+  remove(noearlywithdrawal, uncontrol, control, a, b, c) #Cleaning environment
+  cat("\n")
+}
+remove(i, variable of interest) #Cleaning environment
 
 
 ##Describing propofol dosage in the subgroup of patients treated with propofol and without early withdrawal
@@ -227,13 +317,14 @@ cat("\n")
 #Resuming in the different subgroups (Propofol at initiation)
 uncontrol <- filter(data,data$control == 0 & data$propofol==1 & data$early_withdrawal==0)
 control <- filter(data,data$control == 1 & data$propofol==1 & data$early_withdrawal==0)
+ a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
 Missing <- c(sum(is.na(uncontrol[["propofol_at_initiation"]])),sum(is.na(control[["propofol_at_initiation"]])))
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("Uncontrolled SE", "Controlled SE")
-Mean <- tapply(data[["propofol_at_initiation"]], control, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_at_initiation"]], control, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(data[["propofol_at_initiation"]], control, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_at_initiation"]], control, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(uncontrol[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE)),quantile(control[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -241,12 +332,12 @@ colnames(Q1) <- c("25%")
 Q3 <- c((quantile(uncontrol[["propofol_at_initiation"]], prob=c(.75), na.rm = TRUE)),quantile(control[["propofol_at_initiation"]], prob=c(.75), na.rm = TRUE))
 Q3 <- as.data.frame(Q3)
 colnames(Q3) <- c("75%")
-Median <- tapply(data[["propofol_at_initiation"]], control, FUN = median, na.rm = TRUE)
+Median <- tapply(a[["propofol_at_initiation"]], control, FUN = median, na.rm = TRUE)
 Median <- as.data.frame(Median)
 Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
 row.names(Median) <- c("Uncontrolled SE", "Controlled SE")
 print(kable(Median))
-remove(uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+remove(a, uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
 cat("\n")
  
 #Resuming in the overall cohort (Propofol during the 6 first hours)
@@ -270,13 +361,14 @@ cat("\n")
 #Resuming in the different subgroups (Propofol during the 6 first hours)
 uncontrol <- filter(data,data$control == 0 & data$propofol==1 & data$early_withdrawal==0)
 control <- filter(data,data$control == 1 & data$propofol==1 & data$early_withdrawal==0)
+ a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
 Missing <- c(sum(is.na(uncontrol[["propofol_during_6_first_hours"]])),sum(is.na(control[["propofol_during_6_first_hours"]])))
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("Uncontrolled SE", "Controlled SE")
-Mean <- tapply(data[["propofol_during_6_first_hours"]], control, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(data[["propofol_during_6_first_hours"]], control, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(uncontrol[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE)),quantile(control[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -284,12 +376,12 @@ colnames(Q1) <- c("25%")
 Q3 <- c((quantile(uncontrol[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE)),quantile(control[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE))
 Q3 <- as.data.frame(Q3)
 colnames(Q3) <- c("75%")
-Median <- tapply(data[["propofol_during_6_first_hours"]], control, FUN = median, na.rm = TRUE)
+Median <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = median, na.rm = TRUE)
 Median <- as.data.frame(Median)
 Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
 row.names(Median) <- c("Uncontrolled SE", "Controlled SE")
 print(kable(Median))
-remove(uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+remove(a, uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
 cat("\n")
 
 
@@ -345,9 +437,70 @@ for (i in factors) {
 }
 remove(i) #Cleaning environment
 
+
+##Univariate analysis in the subgroup of patients without early withdrawal (continuous)
+
+variableofinterest <- c("time_before_anaesthetic_withdrawal", "dureeSED", "dureeVM")
+
+for (i in variableofinterest) {
+  uncontrol <- filter(data,data$control == 0 & data$early_withdrawal == 0)
+  control <- filter(data,data$control == 1 & data$early_withdrawal == 0)
+  a <- filter(data,data$early_withdrawal == 0)
+  
+  #Performing test for normality
+  x <- shapiro.test(uncontrol[[i]])
+  y <- shapiro.test(control[[i]])
+  
+  #Comparing means
+  if(x$p.value < 0.05 | y$p.value <0.05 | nrow(uncontrol[i]) < 30 | nrow(control[i]) < 30) {
+    z <- wilcox.test(a[[i]] ~ a$control, data = a, na.rm = TRUE)
+    z <- map_df(list(z), tidy)
+    z <- z[c("method", "alternative", "p.value")]
+    colnames(z) <- c(i, "alternative", "p.value")
+    print(kable(z))
+    cat("\n")
+    
+  } else {
+    z <- t.test(a[[i]] ~ a$control, data = a, var.test = TRUE, na.rm = TRUE)
+    z <- map_df(list(z), tidy)
+    z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
+    colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+    print(kable(z))
+    cat("\n")
+  }
+  remove(a, uncontrol, control, x, y ,z) #Cleaning environment
+}
+remove(i, variableofinterest) #Cleaning environment
+
+##Univariate analysis in the subgroup of patients without early withdrawal (factors)
+variableofinterest <- c("propofol", "midazolam", "thiopental", "propofolmidazolam", "onlypropofol", "onlymidazolam")
+a <- filter(data,data$early_withdrawal == 0)
+
+for (i in variableofinterest) {
+  if(sum((chisq.test(a[[i]], a$control, correct = FALSE)$expected) < 5) == 0) {
+    x <- chisq.test(a[[i]], a$control, correct = FALSE)
+    x <- map_df(list(y), tidy)
+    x <- x[c("method","p.value")]
+    colnames(x) <- c(i, "p.value")
+    print(kable(x))
+    cat("\n")
+  } else {
+    x <- fisher.test(a[[i]], a$control, workspace = 9000000)
+    x <- map_df(list(y), tidy)
+    x <- x[c("method", "alternative", "p.value")]
+    colnames(x) <-c(i, "alternative", "p.value")
+    print(kable(x))
+    cat("\n")
+  }
+  remove(x) #Cleaning environment
+}
+
+remove(i, variable of interest, a) #Cleaning environment
+
 ##Univariate analysis (Propofol at initiation)
 uncontrol <- filter(data,data$control == 0 & data$propofol==1 & data$early_withdrawal==0)
 control <- filter(data,data$control == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
   
 #Performing test for normality
 x <- shapiro.test(uncontrol[["propofol_at_initiation"]])
@@ -355,25 +508,26 @@ y <- shapiro.test(control[["propofol_at_initiation"]])
   
 #Comparing means
 if(x$p.value < 0.05 | y$p.value <0.05 | nrow(uncontrol["propofol_at_initiation"]) < 30 | nrow(control["propofol_at_initiation"]) < 30) {
-  z <- wilcox.test(data[["propofol_at_initiation"]] ~ data$control, data = data, na.rm = TRUE)
+  z <- wilcox.test(a[["propofol_at_initiation"]] ~ a$control, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
   colnames(z) <- c(i, "alternative", "p.value")
   print(kable(z))
   cat("\n")
 } else {
-  z <- t.test(data[["propofol_at_initiation"]] ~ data$control, data = data, var.test = TRUE, na.rm = TRUE)
+  z <- t.test(a[["propofol_at_initiation"]] ~ a$control, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
   colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")   
 }
-remove(uncontrol, control, x, y, z) #Cleaning environment
+remove(a, uncontrol, control, x, y, z) #Cleaning environment
     
 ##Univariate analysis (Propofol during the 6 first hours)
 uncontrol <- filter(data,data$control == 0 & data$propofol==1 & data$early_withdrawal==0)
 control <- filter(data,data$control == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
   
 #Performing test for normality
 x <- shapiro.test(uncontrol[["propofol_during_6_first_hours"]])
@@ -381,22 +535,21 @@ y <- shapiro.test(control[["propofol_during_6_first_hours"]])
   
 #Comparing means
 if(x$p.value < 0.05 | y$p.value <0.05 | nrow(uncontrol["propofol_during_6_first_hours"]) < 30 | nrow(control["propofol_during_6_first_hours"]) < 30) {
-  z <- wilcox.test(data[["propofol_during_6_first_hours"]] ~ data$control, data = data, na.rm = TRUE)
+  z <- wilcox.test(a[["propofol_during_6_first_hours"]] ~ a$control, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
   colnames(z) <- c(i, "alternative", "p.value")
   print(kable(z))
   cat("\n") 
 } else {
-  z <- t.test(data[["propofol_during_6_first_hours"]] ~ data$control, data = data, var.test = TRUE, na.rm = TRUE)
+  z <- t.test(a[["propofol_during_6_first_hours"]] ~ a$control, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
   colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")
 }
-remove(uncontrol, control, x, y, z) #Cleaning environment
-
+remove(uncontrol, control, x, y, z, a) #Cleaning environment
 
 
 ## Binomial logistic regression
@@ -417,7 +570,7 @@ odds.ratio(regression, level=0.95)
 ## Analysis of the subgroup of patients with persistent seizure at admission
 
 #Choosing the variables to be investigated (factors)
-variableofinterest <- c("sexe", "mRS_ad", "GOS_ad", "alcohol","cerebral_injury", "prev_epilepsy", "symptomatique", "cryptogenique", "idiopathique", "prev_SE", "out_of_hospital_onset", "secondary_generalized", "intermittente_seizure", "duree_crise", "focal_neurologic_signs", "unwitness_seizure", "duree_inconnue", "duree_crise", "RSE", "acute", "acute_on_remote", "remote", "progressive", "unknown", "unknown_on_remote", "control", "initial_failure", "breakthrough_seizures", "withdrawal_seizures", "intolerable_side_effects", "death_during_treatment", "clonies_ad", "MRI_An_post_critique", "1st_line", "2nd line", "fosphenytoine", "phenobarbital", "levetiracetam", "valproate", "autres_2_eme_ligne", "IOT_bef", "IOT_bef_SE", "IOT_bef_coma", "IOT_bef_resp","IOT_ad", "IOT_ad_SE", "IOT_ad_coma", "IOT_ad_resp", "propofol", "midazolam", "thiopental", "MRI", "early_withdrawal", "acute_vasc", "acute_stroke", "acute_hemoragic", "acute_PRES", "acute_TVC", "acute_toxic", "acute_drug", "acute_OH", "acute_metabolic", "acute_trauma", "acute_infection", "acute_heatstroke", "tumor_progressive", "dysimmune_progressive", "remote_all, epilepto", "mRS_admission_01", "mRS_discharge_01", "death_discharge", "mRS_3month_01", "death_3month", "hyperglycemia", "dureeinf30", "propofolmidazolam", "onlypropofol", "onlymidazolam","vasc_remote", "others_remote")
+variableofinterest <- c("sexe", "mRS_ad", "GOS_ad", "alcohol","cerebral_injury", "prev_epilepsy", "symptomatique", "cryptogenique", "idiopathique", "prev_SE", "out_of_hospital_onset", "secondary_generalized", "intermittente_seizure", "duree_crise", "focal_neurologic_signs", "unwitness_seizure", "duree_inconnue", "duree_crise", "RSE", "acute", "acute_on_remote", "remote", "progressive", "unknown", "unknown_on_remote", "control", "initial_failure", "breakthrough_seizures", "withdrawal_seizures", "intolerable_side_effects", "death_during_treatment", "clonies_ad", "MRI_An_post_critique", "1st_line", "2nd line", "fosphenytoine", "phenobarbital", "levetiracetam", "valproate", "autres_2_eme_ligne", "IOT_bef", "IOT_bef_SE", "IOT_bef_coma", "IOT_bef_resp","IOT_ad", "IOT_ad_SE", "IOT_ad_coma", "IOT_ad_resp", "MRI", "early_withdrawal", "acute_vasc", "acute_stroke", "acute_hemoragic", "acute_PRES", "acute_TVC", "acute_toxic", "acute_drug", "acute_OH", "acute_metabolic", "acute_trauma", "acute_infection", "acute_heatstroke", "tumor_progressive", "dysimmune_progressive", "remote_all, epilepto", "mRS_admission_01", "mRS_discharge_01", "death_discharge", "mRS_3month_01", "death_3month", "hyperglycemia", "dureeinf30","vasc_remote", "others_remote")
 
 for (i in variableofinterest) {
   #Resuming factors (n)
@@ -469,10 +622,10 @@ for (i in variableofinterest) {
   }
   remove(x) #Cleaning environment
 }
-remove(i) #Cleaning environment
+remove(i, variableofinterest) #Cleaning environment
 
 #Choosing the variables to be investigated (continuous variables)
-variableofinterest <- c("age", "SAPS_II", "SAPS_II_age", "STESS","tempFirst", "GCS_T_ad","propofol_at_initiation", "propofol_during_6_first_hours", "time_before_anaesthetic_withdrawal", "ICU_stay", "dureeSED", "dureeVM")
+variableofinterest <- c("age", "SAPS_II", "SAPS_II_age", "STESS","tempFirst", "GCS_T_ad")
 
 for (i in variableofinterest) {
   #Resuming continuous variables in the overall cohort
@@ -548,19 +701,20 @@ for (i in variableofinterest) {
   }
   remove(noclonie, clonie, x, y ,z) #Cleaning environment
 }
-remove(i) #Cleaning environment
+remove(i, variableofinterest) #Cleaning environment
 
 
 #Resuming continuous variables in the different subgroups (Propofol at initiation)
 noclonie <- filter(data,data$clonies_ad == 0 & data$propofol==1 & data$early_withdrawal==0)
 clonie <- filter(data,data$clonies_ad == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
 Missing <- c(sum(is.na(noclonie[["propofol_at_initiation"]])),sum(is.na(clonie[["propofol_at_initiation"]])))
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("No persistent seizure", "Persistent seizure")
-Mean <- tapply(data[["propofol_at_initiation"]], data$clonies_ad, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_at_initiation"]], a$clonies_ad, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(data[["propofol_at_initiation"]], data$clonies_ad, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_at_initiation"]], a$clonies_ad, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(noclonie[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE)),quantile(clonie[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -568,17 +722,18 @@ colnames(Q1) <- c("25%")
 Q3 <- c((quantile(noclonie[["propofol_at_initiation"]], prob=c(.75), na.rm = TRUE)),quantile(clonie[["propofol_at_initiation"]], prob=c(.75), na.rm = TRUE))
 Q3 <- as.data.frame(Q3)
 colnames(Q3) <- c("75%")
-Median <- tapply(data[["propofol_at_initiation"]], data$clonies_ad, FUN = median, na.rm = TRUE)
+Median <- tapply(a[["propofol_at_initiation"]], a$clonies_ad, FUN = median, na.rm = TRUE)
 Median <- as.data.frame(Median)
 Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
 row.names(Median) <- c("No persistent seizure", "Persistent seizure")
 print(kable(Median))
-remove(noclonie, clonie, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+remove(a, noclonie, clonie, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
 cat("\n")
 
 #Univariate analysis (Propofol at initiation)
 noclonie <- filter(data,data$clonies_ad == 0 & data$propofol==1 & data$early_withdrawal==0)
 clonie <- filter(data,data$clonies_ad == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
   
 #Performing test for normality
 x <- shapiro.test(noclonie[["propofol_at_initiation"]])
@@ -586,14 +741,14 @@ y <- shapiro.test(clonie[["propofol_at_initiation"]])
   
 #Comparing means
 if(x$p.value < 0.05 | y$p.value <0.05 | nrow(noclonie["propofol_at_initiation"]) < 30 | nrow(clonie["propofol_at_initiation"]) < 30) {
-  z <- wilcox.test(data[["propofol_at_initiation"]] ~ data$clonies_ad, data = data, na.rm = TRUE)
+  z <- wilcox.test(a[["propofol_at_initiation"]] ~ a$clonies_ad, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
   colnames(z) <- c(i, "alternative", "p.value")
   print(kable(z))
   cat("\n") 
 } else {
-  z <- t.test(data[["propofol_at_initiation"]] ~ data$clonies_ad, data = data, var.test = TRUE, na.rm = TRUE)
+  z <- t.test(a[["propofol_at_initiation"]] ~ a$clonies_ad, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
   colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
@@ -605,13 +760,14 @@ remove(noclonie, clonie, x, y, z) #Cleaning environment
 #Resuming continuous variables in the different subgroups (Propofol during the 6 first hours)
 noclonie <- filter(data,data$clonies_ad == 0 & data$propofol==1 & data$early_withdrawal==0)
 clonie <- filter(data,data$clonies_ad == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
 Missing <- c(sum(is.na(noclonie[["propofol_during_6_first_hours"]])),sum(is.na(clonie[["propofol_during_6_first_hours"]])))
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("No persistent seizure", "Persistent seizure")
-Mean <- tapply(data[["propofol_during_6_first_hours"]], data$clonies_ad, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_during_6_first_hours"]], a$clonies_ad, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(data[["propofol_during_6_first_hours"]], data$clonies_ad, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_during_6_first_hours"]], a$clonies_ad, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(noclonie[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE)),quantile(clonie[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -619,17 +775,18 @@ colnames(Q1) <- c("25%")
 Q3 <- c((quantile(noclonie[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE)),quantile(clonie[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE))
 Q3 <- as.data.frame(Q3)
 colnames(Q3) <- c("75%")
-Median <- tapply(data[["propofol_during_6_first_hours"]], data$clonies_ad, FUN = median, na.rm = TRUE)
+Median <- tapply(a[["propofol_during_6_first_hours"]], a$clonies_ad, FUN = median, na.rm = TRUE)
 Median <- as.data.frame(Median)
 Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
 row.names(Median) <- c("No persistent seizure", "Persistent seizure")
 print(kable(Median))
-remove(noclonie, clonie, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+remove(a, noclonie, clonie, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
 cat("\n")
 
 #Univariate analysis (Propofol during the 6 first hours)
 noclonie <- filter(data,data$clonies_ad == 0 & data$propofol==1 & data$early_withdrawal==0)
 clonie <- filter(data,data$clonies_ad == 1 & data$propofol==1 & data$early_withdrawal==0)
+a <- filter(data,data$early_withdrawal == 0 & data$propofol==1)
   
 #Performing test for normality
 x <- shapiro.test(noclonie[["propofol_during_6_first_hours"]])
@@ -637,18 +794,18 @@ y <- shapiro.test(clonie[["propofol_during_6_first_hours"]])
   
 #Comparing means
 if(x$p.value < 0.05 | y$p.value <0.05 | nrow(noclonie["propofol_during_6_first_hours"]) < 30 | nrow(clonie["propofol_during_6_first_hours"]) < 30) {
-  z <- wilcox.test(data[["propofol_during_6_first_hours"]] ~ data$clonies_ad, data = data, na.rm = TRUE)
+  z <- wilcox.test(a[["propofol_during_6_first_hours"]] ~ a$clonies_ad, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
   colnames(z) <- c(i, "alternative", "p.value")
   print(kable(z))
   cat("\n")
 } else {
-  z <- t.test(data[["propofol_during_6_first_hours"]] ~ data$clonies_ad, data = data, var.test = TRUE, na.rm = TRUE)
+  z <- t.test(a[["propofol_during_6_first_hours"]] ~ a$clonies_ad, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
   colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")
 }
-remove(noclonie, clonie, x, y, z) #Cleaning environment
+remove(a, noclonie, clonie, x, y, z) #Cleaning environment

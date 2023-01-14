@@ -883,3 +883,60 @@ for (i in variableofinterest) {
 }
 remove(i, variableofinterest) #Cleaning environment
 
+##Univariate analysis in the subgroup of patients without early withdrawal (continuous)
+variableofinterest <- c("time_before_anaesthetic_withdrawal")
+
+for (i in variableofinterest) {
+  noclonie <- filter(data,data$clonies_ad == 0 & data$early_withdrawal == 0)
+  clonie <- filter(data,data$clonies_ad == 1 & data$early_withdrawal == 0)
+  a <- filter(data,data$early_withdrawal == 0)
+  
+  #Performing test for normality
+  x <- shapiro.test(noclonie[[i]])
+  y <- shapiro.test(clonie[[i]])
+  
+  #Comparing means
+  if(x$p.value < 0.05 | y$p.value <0.05 | nrow(noclonie[i]) < 30 | nrow(clonie[i]) < 30) {
+    z <- wilcox.test(a[[i]] ~ a$clonies_ad, data = a, na.rm = TRUE)
+    z <- map_df(list(z), tidy)
+    z <- z[c("method", "alternative", "p.value")]
+    colnames(z) <- c(i, "alternative", "p.value")
+    print(kable(z))
+    cat("\n")
+    
+  } else {
+    z <- t.test(a[[i]] ~ a$clonies_ad, data = a, var.test = TRUE, na.rm = TRUE)
+    z <- map_df(list(z), tidy)
+    z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
+    colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+    print(kable(z))
+    cat("\n")
+  }
+  remove(a, noclonie, clonie, x, y ,z) #Cleaning environment
+}
+remove(i, variableofinterest) #Cleaning environment
+
+##Univariate analysis in the subgroup of patients without early withdrawal (factors)
+variableofinterest <- c("propofol", "midazolam", "thiopental", "propofolmidazolam", "onlypropofol", "onlymidazolam")
+a <- filter(data,data$early_withdrawal == 0)
+
+for (i in variableofinterest) {
+  if(sum((chisq.test(a[[i]], a$clonies_ad, correct = FALSE)$expected) < 5) == 0) {
+    x <- chisq.test(a[[i]], a$clonies_ad, correct = FALSE)
+    x <- map_df(list(x), tidy)
+    x <- x[c("method","p.value")]
+    colnames(x) <- c(i, "p.value")
+    print(kable(x))
+    cat("\n")
+  } else {
+    x <- fisher.test(a[[i]], a$clonies_ad, workspace = 9000000)
+    x <- map_df(list(x), tidy)
+    x <- x[c("method", "alternative", "p.value")]
+    colnames(x) <-c(i, "alternative", "p.value")
+    print(kable(x))
+    cat("\n")
+  }
+  remove(x) #Cleaning environment
+}
+
+remove(i, variableofinterest, a) #Cleaning environment

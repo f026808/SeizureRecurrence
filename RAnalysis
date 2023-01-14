@@ -205,7 +205,7 @@ remove(i) #Cleaning environment
 ##Resuming data in the subgroup of patients without early withdrawal
 
 #Defining variables of interest (continuous)
-variableofinterest <- c("time_before_anaesthetic_withdrawal", "dureeSED", "dureeVM")
+variableofinterest <- c("time_before_anaesthetic_withdrawal")
 
 #Resuming continuous variables
 for (i in variableofinterest) {
@@ -253,7 +253,7 @@ for (i in variableofinterest) {
   remove(a,uncontrol, control, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
   cat("\n")
 }
-remove(i, variable of interest) #Cleaning environment
+remove(i, variableofinterest) #Cleaning environment
 
 #Defining variables of interest (factors)
 variableofinterest <- c("propofol", "midazolam", "thiopental", "propofolmidazolam", "onlypropofol", "onlymidazolam")
@@ -291,7 +291,7 @@ for (i in variableofinterest) {
   remove(noearlywithdrawal, uncontrol, control, a, b, c) #Cleaning environment
   cat("\n")
 }
-remove(i, variable of interest) #Cleaning environment
+remove(i, variableofinterest) #Cleaning environment
 
 
 ##Describing propofol dosage in the subgroup of patients treated with propofol and without early withdrawal
@@ -440,7 +440,7 @@ remove(i) #Cleaning environment
 
 ##Univariate analysis in the subgroup of patients without early withdrawal (continuous)
 
-variableofinterest <- c("time_before_anaesthetic_withdrawal", "dureeSED", "dureeVM")
+variableofinterest <- c("time_before_anaesthetic_withdrawal")
 
 for (i in variableofinterest) {
   uncontrol <- filter(data,data$control == 0 & data$early_withdrawal == 0)
@@ -744,14 +744,14 @@ if(x$p.value < 0.05 | y$p.value <0.05 | nrow(noclonie["propofol_at_initiation"])
   z <- wilcox.test(a[["propofol_at_initiation"]] ~ a$clonies_ad, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
-  colnames(z) <- c(i, "alternative", "p.value")
+  colnames(z) <- c("propofol_at_initiation", "alternative", "p.value")
   print(kable(z))
   cat("\n") 
 } else {
   z <- t.test(a[["propofol_at_initiation"]] ~ a$clonies_ad, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
-  colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+  colnames(z) <- c("propofol_at_initiation", "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")
 }
@@ -797,15 +797,89 @@ if(x$p.value < 0.05 | y$p.value <0.05 | nrow(noclonie["propofol_during_6_first_h
   z <- wilcox.test(a[["propofol_during_6_first_hours"]] ~ a$clonies_ad, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
-  colnames(z) <- c(i, "alternative", "p.value")
+  colnames(z) <- c("propofol_during_6_first_hours", "alternative", "p.value")
   print(kable(z))
   cat("\n")
 } else {
   z <- t.test(a[["propofol_during_6_first_hours"]] ~ a$clonies_ad, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
-  colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+  colnames(z) <- c("propofol_during_6_first_hours", "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")
 }
 remove(a, noclonie, clonie, x, y, z) #Cleaning environment
+
+#Resuming data in the subgroup of patients without early withdrawal
+
+#Defining variables of interest (continuous)
+variableofinterest <- c("time_before_anaesthetic_withdrawal")
+
+#Resuming continuous variables
+for (i in variableofinterest) {
+  #Resuming continuous variables in the different subgroups
+  noclonie <- filter(data,data$clonies_ad == 0 & data$early_withdrawal == 0)
+  clonie <- filter(data,data$clonies_ad == 1 & data$early_withdrawal == 0)
+  a <- filter(data,data$early_withdrawal == 0)
+  Missing <- c(sum(is.na(noclonie[[i]])),sum(is.na(clonie[[i]])))
+  Missing <- as.data.frame(Missing)
+  colnames(Missing) <- c("NA")
+  row.names(Missing) <- c("No persistent seizure", "Persistent seizure")
+  Mean <- tapply(a[[i]], a$clonies_ad, FUN = mean, na.rm = TRUE)
+  Mean <- as.data.frame(Mean)
+  SD <- tapply(a[[i]], a$clonies_ad, FUN = sd, na.rm = 1)
+  SD <- as.data.frame(SD)
+  Q1 <- c((quantile(noclonie[[i]], prob=c(.25), na.rm = TRUE)),quantile(clonie[[i]], prob=c(.25), na.rm = TRUE))
+  Q1 <- as.data.frame(Q1)
+  colnames(Q1) <- c("25%")
+  Q3 <- c((quantile(noclonie[[i]], prob=c(.75), na.rm = TRUE)),quantile(clonie[[i]], prob=c(.75), na.rm = TRUE))
+  Q3 <- as.data.frame(Q3)
+  colnames(Q3) <- c("75%")
+  Median <- tapply(a[[i]], a$clonies_ad, FUN = median, na.rm = TRUE)
+  Median <- as.data.frame(Median)
+  Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
+  row.names(Median) <- c("No persistent seizure", "Persistent seizure")
+  print(kable(Median))
+  remove(a,noclonie, clonie, Missing, Mean, SD, Q1, Q3, Median) #Cleaning environment
+  cat("\n")
+}
+remove(i, variableofinterest) #Cleaning environment
+
+#Defining variables of interest (factors)
+variableofinterest <- c("propofol", "midazolam", "thiopental", "propofolmidazolam", "onlypropofol", "onlymidazolam")
+
+#Resuming factors
+for (i in variableofinterest) {
+  #Resuming factors (n)
+  cat("\n")
+  noearlywithdrawal <- filter(data,data$early_withdrawal==0)
+  noclonie <- filter(data,data$clonies_ad == 0 & data$early_withdrawal==0)
+  clonie <- filter(data,data$clonies_ad == 1 & data$early_withdrawal==0)
+  
+  x <- table(noearlywithdrawal[[i]], useNA = "always")
+  x <- as.data.frame(x)
+  y <- table(noclonie[[i]], useNA = "always")
+  y <- as.data.frame(y)
+  z <- table(clonie[[i]], useNA = "always")
+  z <- as.data.frame(z)
+  x <- cbind(x,y[2],z[2])
+  colnames(x) <- c(i, "Overall Cohort (n)", "No persistent seizure at admission (n)", "Persistent seizure at admission (n)")
+  print(kable(x))
+  remove(x, y, z) #Cleaning environment
+  cat("\n")
+  
+  #Resuming factors (%)
+  a <- prop.table(table(noearlywithdrawal[[i]], useNA = "no"))
+  a <- as.data.frame(a)
+  b <- prop.table(table(noclonie[[i]], useNA = "no"))
+  b <- as.data.frame(b)
+  c <- prop.table(table(clonie[[i]], useNA = "no"))
+  c <- as.data.frame(c)
+  a <- cbind(a, b[2], c[2])
+  colnames(a) <- c(i, "Overall Cohort (%)", "No persistent seizure at admission (%)", "Persistent seizure at admission (%)")
+  print(kable(a))
+  remove(noearlywithdrawal, noclonie, clonie, a, b, c) #Cleaning environment
+  cat("\n")
+}
+remove(i, variableofinterest) #Cleaning environment
+

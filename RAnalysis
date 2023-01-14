@@ -233,8 +233,8 @@ for (i in variableofinterest) {
   a <- filter(data,data$early_withdrawal == 0)
   Missing <- c(sum(is.na(a[[i]])),sum(is.na(b[[i]])))
   Missing <- as.data.frame(Missing)
-  colnames(missing) <- c("NA")
-  row.names(missing) <- c("Uncontrolled SE", "Controlled SE")
+  colnames(Missing) <- c("NA")
+  row.names(Missing) <- c("Uncontrolled SE", "Controlled SE")
   Mean <- tapply(a[[i]], control, FUN = mean, na.rm = TRUE)
   Mean <- as.data.frame(Mean)
   SD <- tapply(a[[i]], control, FUN = sd, na.rm = 1)
@@ -322,9 +322,9 @@ Missing <- c(sum(is.na(uncontrol[["propofol_at_initiation"]])),sum(is.na(control
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("Uncontrolled SE", "Controlled SE")
-Mean <- tapply(a[["propofol_at_initiation"]], control, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_at_initiation"]], a$control, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(a[["propofol_at_initiation"]], control, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_at_initiation"]], a$control, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(uncontrol[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE)),quantile(control[["propofol_at_initiation"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -354,7 +354,7 @@ d <- as.data.frame(d)
 colnames(d) <- c("Propofol during 6 first hours")
 row.names(d) <- c("NA")
 b <- rbind(b, c, d)
-print(kable(x))
+print(kable(b))
 remove(a, b, c, d) #Cleaning environment
 cat("\n")
   
@@ -366,9 +366,9 @@ Missing <- c(sum(is.na(uncontrol[["propofol_during_6_first_hours"]])),sum(is.na(
 Missing <- as.data.frame(Missing)
 colnames(Missing) <- c("NA")
 row.names(Missing) <- c("Uncontrolled SE", "Controlled SE")
-Mean <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = mean, na.rm = TRUE)
+Mean <- tapply(a[["propofol_during_6_first_hours"]], a$control, FUN = mean, na.rm = TRUE)
 Mean <- as.data.frame(Mean)
-SD <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = sd, na.rm = 1)
+SD <- tapply(a[["propofol_during_6_first_hours"]], a$control, FUN = sd, na.rm = 1)
 SD <- as.data.frame(SD)
 Q1 <- c((quantile(uncontrol[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE)),quantile(control[["propofol_during_6_first_hours"]], prob=c(.25), na.rm = TRUE))
 Q1 <- as.data.frame(Q1)
@@ -376,7 +376,7 @@ colnames(Q1) <- c("25%")
 Q3 <- c((quantile(uncontrol[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE)),quantile(control[["propofol_during_6_first_hours"]], prob=c(.75), na.rm = TRUE))
 Q3 <- as.data.frame(Q3)
 colnames(Q3) <- c("75%")
-Median <- tapply(a[["propofol_during_6_first_hours"]], control, FUN = median, na.rm = TRUE)
+Median <- tapply(a[["propofol_during_6_first_hours"]], a$control, FUN = median, na.rm = TRUE)
 Median <- as.data.frame(Median)
 Median <- cbind(Q1, Median, Q3, Mean, SD, Missing)
 row.names(Median) <- c("Uncontrolled SE", "Controlled SE")
@@ -479,14 +479,14 @@ a <- filter(data,data$early_withdrawal == 0)
 for (i in variableofinterest) {
   if(sum((chisq.test(a[[i]], a$control, correct = FALSE)$expected) < 5) == 0) {
     x <- chisq.test(a[[i]], a$control, correct = FALSE)
-    x <- map_df(list(y), tidy)
+    x <- map_df(list(x), tidy)
     x <- x[c("method","p.value")]
     colnames(x) <- c(i, "p.value")
     print(kable(x))
     cat("\n")
   } else {
     x <- fisher.test(a[[i]], a$control, workspace = 9000000)
-    x <- map_df(list(y), tidy)
+    x <- map_df(list(x), tidy)
     x <- x[c("method", "alternative", "p.value")]
     colnames(x) <-c(i, "alternative", "p.value")
     print(kable(x))
@@ -495,7 +495,7 @@ for (i in variableofinterest) {
   remove(x) #Cleaning environment
 }
 
-remove(i, variable of interest, a) #Cleaning environment
+remove(i, variableofinterest, a) #Cleaning environment
 
 ##Univariate analysis (Propofol at initiation)
 uncontrol <- filter(data,data$control == 0 & data$propofol==1 & data$early_withdrawal==0)
@@ -511,14 +511,14 @@ if(x$p.value < 0.05 | y$p.value <0.05 | nrow(uncontrol["propofol_at_initiation"]
   z <- wilcox.test(a[["propofol_at_initiation"]] ~ a$control, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
-  colnames(z) <- c(i, "alternative", "p.value")
+  colnames(z) <- c("propofol_at_initiation", "alternative", "p.value")
   print(kable(z))
   cat("\n")
 } else {
   z <- t.test(a[["propofol_at_initiation"]] ~ a$control, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
-  colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+  colnames(z) <- c("propofol_at_initiation", "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")   
 }
@@ -538,14 +538,14 @@ if(x$p.value < 0.05 | y$p.value <0.05 | nrow(uncontrol["propofol_during_6_first_
   z <- wilcox.test(a[["propofol_during_6_first_hours"]] ~ a$control, data = a, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value")]
-  colnames(z) <- c(i, "alternative", "p.value")
+  colnames(z) <- c("propofol_during_6_first_hours", "alternative", "p.value")
   print(kable(z))
   cat("\n") 
 } else {
   z <- t.test(a[["propofol_during_6_first_hours"]] ~ a$control, data = a, var.test = TRUE, na.rm = TRUE)
   z <- map_df(list(z), tidy)
   z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
-  colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
+  colnames(z) <- c("propofol_during_6_first_hours", "alternative", "p.value", "conf.low", "conf.high")
   print(kable(z))
   cat("\n")
 }

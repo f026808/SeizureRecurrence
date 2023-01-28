@@ -692,7 +692,7 @@ for (i in variableofinterest) {
     cat("\n")
     
   } else {
-    z <- t.test(data[[i]] ~ data$control, data = data, var.test = TRUE, na.rm = TRUE)
+    z <- t.test(data[[i]] ~ data$clonies_ad, data = data, var.test = TRUE, na.rm = TRUE)
     z <- map_df(list(z), tidy)
     z <- z[c("method", "alternative", "p.value", "conf.low", "conf.high")]
     colnames(z) <- c(i, "alternative", "p.value", "conf.low", "conf.high")
